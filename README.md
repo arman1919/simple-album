@@ -1,70 +1,84 @@
-# Getting Started with Create React App
+# Онлайн Фотоальбом с Публичной Ссылкой
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Описание
 
-## Available Scripts
+Простой веб-сервис, позволяющий пользователям создавать онлайн-фотоальбомы, добавлять в них изображения и делиться альбомом с другими через публичную ссылку. Реализована админская часть, где пользователь может управлять своими фотографиями (добавлять, удалять). Просмотр альбома доступен всем по ссылке, но только для просмотра.
 
-In the project directory, you can run:
+## Основные функции
 
-### `npm start`
+### Админская часть (/admin/:albumId)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Загрузка одного или нескольких изображений в альбом
+- Просмотр всех фото в альбоме
+- Удаление отдельных фото
+- Удаление всего альбома (через секретный токен)
+- Генерация публичной ссылки для просмотра
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Публичная часть (/album/:albumId)
 
-### `npm test`
+- Отображение двух фото на странице
+- Кнопки «Вперёд» и «Назад» для перелистывания
+- Только просмотр, без возможности редактирования
+- Подходит для отправки друзьям/коллегам
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Технологический стек
 
-### `npm run build`
+### Фронтенд (React)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- React.js — SPA для интерактивного UI
+- React Router — маршрутизация между /admin/:id и /album/:id
+- Axios — HTTP-запросы к API
+- CSS Utility Classes — стилизация
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Бэкенд (Node.js + Express)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Node.js + Express — REST API
+- Multer — загрузка изображений
+- UUID — генерация уникальных ID для альбомов
+- CORS — разрешение кросс-доменных запросов
+- FS (File System) — работа с локальными файлами
 
-### `npm run eject`
+## Установка и запуск
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. Клонируйте репозиторий
+2. Установите зависимости:
+   ```
+   npm install
+   ```
+3. Запустите приложение в режиме разработки:
+   ```
+   npm run dev
+   ```
+   Это запустит и фронтенд (на порту 3000), и бэкенд (на порту 5000) одновременно.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+4. Откройте [http://localhost:3000](http://localhost:3000) в браузере
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Структура проекта
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```
+├── public/              # Статические файлы
+├── src/                 # Исходный код React-приложения
+│   ├── components/      # React-компоненты
+│   │   ├── Home.js      # Главная страница
+│   │   ├── AdminAlbum.js # Админская часть альбома
+│   │   ├── PublicAlbum.js # Публичная часть альбома
+│   │   └── NotFound.js  # Страница 404
+│   ├── App.js           # Главный компонент приложения
+│   ├── index.js         # Точка входа
+│   └── ...              # Другие файлы
+├── server.js            # Бэкенд Express-сервер
+├── uploads/             # Папка для загруженных изображений
+└── package.json         # Зависимости и скрипты
+```
 
-## Learn More
+## Использование
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. На главной странице нажмите кнопку "Создать новый альбом"
+2. Вы будете перенаправлены на страницу администрирования альбома
+3. Загрузите фотографии, используя кнопку "Выбрать файлы"
+4. Скопируйте публичную ссылку и поделитесь ею с друзьями
+5. Друзья смогут просматривать фотографии, но не смогут их редактировать
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Важно
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Сохраните URL админской страницы, так как это единственный способ получить доступ к управлению вашим альбомом в будущем. Секретный токен хранится в локальном хранилище браузера.
