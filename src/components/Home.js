@@ -12,11 +12,13 @@ const Home = () => {
       setLoading(true);
       setError(null);
       
+      console.log('Отправка запроса на создание альбома...');
       const response = await axios.post('http://localhost:5000/api/albums');
-      const { albumId, secretToken } = response.data;
+      console.log('Ответ от сервера:', response.data);
+      const { albumId, deleteToken } = response.data;
       
-      // Save the secret token to localStorage for this album
-      localStorage.setItem(`album_token_${albumId}`, secretToken);
+      // Save the delete token to localStorage for this album
+      localStorage.setItem(`album_token_${albumId}`, deleteToken);
       
       // Navigate to the admin page for the new album
       navigate(`/admin/${albumId}`);
@@ -53,10 +55,7 @@ const Home = () => {
           <li>Поделитесь публичной ссылкой с друзьями</li>
           <li>Управляйте своими фотографиями через админскую панель</li>
         </ol>
-        <div className="mt-6 p-4 bg-yellow-100 rounded-lg">
-          <p className="font-semibold">Важно:</p>
-          <p>Сохраните URL админской страницы, так как это единственный способ получить доступ к управлению вашим альбомом.</p>
-        </div>
+
       </div>
     </div>
   );

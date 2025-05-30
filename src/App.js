@@ -1,15 +1,18 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import Home from './components/Home';
 import AdminAlbum from './components/AdminAlbum';
 import PublicAlbum from './components/PublicAlbum';
 import NotFound from './components/NotFound';
+import Auth from './components/Auth';
 
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Home />} />
           <Route path="/admin/:albumId" element={<AdminAlbum />} />
           <Route path="/album/:albumId" element={<PublicAlbum />} />
