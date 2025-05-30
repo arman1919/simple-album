@@ -31,7 +31,7 @@ const Auth = () => {
         if (response.data.success) {
           console.log('Успешный вход, сохраняем данные...');
           // Сохраняем данные пользователя в localStorage
-          localStorage.setItem('userId', response.data.userId);
+          localStorage.setItem('userToken', response.data.token);
           localStorage.setItem('username', response.data.username);
           
           // Перенаправляем на домашнюю страницу
@@ -82,9 +82,47 @@ const Auth = () => {
   const handleGuestMode = async () => {
     try {
       setLoading(true);
-      // Создаем новый альбом без пользователя
-      const response = await axios.post('http://localhost:5000/api/albums');
-      const { albumId, deleteToken } = response.data;
+      console.log('Создание гостевого альбома...');
+      
+      // Сначала регистрируем гостевого пользователя
+      const guestUsername = `guest_${Date.now()}`;
+      const guestEmail = `guest_${Date.now()}@example.com`;
+      const guestPassword = `guest_${Date.now()}`;
+      
+      // Регистрация гостевого пользователя
+      const registerResponse = await axios.post('http://localhost:5000/api/users/register', {
+        username: guestUsername,
+        email: guestEmail,
+        password: guestPassword
+      });
+      
+      console.log('Гостевой пользователь зарегистрирован:', registerResponse.data);
+      
+      // Логин гостевого пользователя
+      const loginResponse = await axios.post('http://localhost:5000/api/users/login', {
+        email: guestEmail,
+        password: guestPassword
+      });
+      
+      console.log('Гостевой пользователь авторизован:', loginResponse.data);
+      
+      // Сохраняем токен гостевого пользователя
+      const guestToken = loginResponse.data.token;
+      localStorage.setItem('userToken', guestToken);
+      localStorage.setItem('username', guestUsername);
+      
+      // Создаем новый альбом для гостевого пользователя
+      const albumResponse = await axios.post('http://localhost:5000/api/albums', 
+        { title: 'Гостевой альбом' },
+        {
+          headers: {
+            'Authorization': `Bearer ${guestToken}`
+          }
+        }
+      );
+      
+      console.log('Альбом создан:', albumResponse.data);
+      const { albumId, deleteToken } = albumResponse.data;
       
       // Сохраняем токен для удаления альбома
       localStorage.setItem(`album_token_${albumId}`, deleteToken);
@@ -93,7 +131,7 @@ const Auth = () => {
       navigate(`/admin/${albumId}`);
     } catch (err) {
       console.error('Ошибка создания гостевого альбома:', err);
-      setError('Не удалось создать гостевой альбом. Пожалуйста, попробуйте снова.');
+      setError('Не удалось создать гостевой альбом: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }

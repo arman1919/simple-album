@@ -1,147 +1,200 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
+import '../styles/AlbumStyles.css';
 
-const PublicAlbum = () => {
-  const { albumId } = useParams();
-  const navigate = useNavigate();
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+// Базовый URL сервера для загрузки изображений
+const SERVER_BASE_URL = 'http://localhost:5000';
 
-  useEffect(() => {
-    const checkAlbumExists = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/albums/${albumId}`);
-        if (!response.data.exists) {
-          navigate('/404');
-          return;
+function PublicAlbum() {
+    const { albumId } = useParams();
+    const navigate = useNavigate();
+    const [images, setImages] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [albumTitle, setAlbumTitle] = useState('');
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isOwner, setIsOwner] = useState(false);
+
+    // Функция для переключения на предыдущее изображение
+    const prevImage = useCallback(() => {
+        if (images.length === 0) return;
+        setCurrentImageIndex((prevIndex) => 
+            prevIndex === 0 ? images.length - 1 : prevIndex - 1
+        );
+    }, [images.length]);
+    
+    // Функция для переключения на следующее изображение
+    const nextImage = useCallback(() => {
+        if (images.length === 0) return;
+        setCurrentImageIndex((prevIndex) => 
+            prevIndex === images.length - 1 ? 0 : prevIndex + 1
+        );
+    }, [images.length]);
+    
+    // Обработчик нажатия клавиш
+    const handleKeyDown = useCallback((event) => {
+        if (event.key === 'ArrowLeft') {
+            prevImage();
+        } else if (event.key === 'ArrowRight') {
+            nextImage();
         }
-      } catch (err) {
-        console.error('Error checking album:', err);
-        navigate('/404');
-        return;
-      }
-    };
+    }, [prevImage, nextImage]);
+    
+    // Добавляем обработчик нажатия клавиш
+    useEffect(() => {
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleKeyDown]);
+    
+    // Проверяем, является ли пользователь владельцем альбома
+    useEffect(() => {
+        const checkOwnership = async () => {
+            try {
+                const userToken = localStorage.getItem('userToken');
+                if (!userToken) {
+                    setIsOwner(false);
+                    return;
+                }
 
-    const fetchImages = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/albums/${albumId}/images`);
-        const fetchedImages = response.data.images || [];
-        
-        if (fetchedImages.length === 0) {
-          setError('В этом альбоме пока нет фотографий.');
-        } else {
-          setImages(fetchedImages);
+                // Проверяем, есть ли у пользователя токен удаления для этого альбома
+                const deleteToken = localStorage.getItem(`album_token_${albumId}`);
+                if (deleteToken) {
+                    setIsOwner(true);
+                    return;
+                }
+
+                // Если нет токена удаления, проверяем через API
+                try {
+                    const response = await api.get(`/api/albums/${albumId}/check-ownership`, {
+                        headers: {
+                            'Authorization': `Bearer ${userToken}`
+                        }
+                    });
+                    setIsOwner(response.data.isOwner);
+                } catch (err) {
+                    // Если ошибка при проверке, считаем что пользователь не владелец
+                    setIsOwner(false);
+                }
+            } catch (err) {
+                setIsOwner(false);
+            }
+        };
+
+        if (albumId) {
+            checkOwnership();
         }
-      } catch (err) {
-        console.error('Error fetching images:', err);
-        setError('Не удалось загрузить изображения. Пожалуйста, попробуйте еще раз.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    }, [albumId]);
 
-    checkAlbumExists();
-    fetchImages();
-  }, [albumId, navigate]);
+    useEffect(() => {
+        const fetchAlbumImages = async () => {
+            try {
+                setLoading(true);
+                const response = await api.get(`/api/albums/${albumId}/public`); 
+                setImages(response.data.images || []); // Предполагается, что ответ содержит { images: ['url1', 'url2', ...] }
+                
+                // Если в ответе есть название альбома, устанавливаем его
+                if (response.data.albumTitle) {
+                    setAlbumTitle(response.data.albumTitle);
+                }
+                
+                setError(null);
+            } catch (err) {
+                console.error("Error fetching album images:", err);
+                setError('Не удалось загрузить альбом. Пожалуйста, попробуйте позже.');
+                setImages([]);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  const goToNextImage = () => {
-    if (currentIndex < images.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
+        if (albumId) {
+            fetchAlbumImages();
+        }
+    }, [albumId]);
 
-  const goToPrevImage = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-6">Загрузка альбома...</h1>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-6">Фотоальбом</h1>
-        <p className="text-red-500 mb-4">{error}</p>
-        <button 
-          onClick={() => navigate('/')}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-        >
-          Вернуться на главную
-        </button>
-      </div>
-    );
-  }
-
-  // Calculate which images to show (current and next)
-  const currentImage = images[currentIndex];
-  const nextImage = currentIndex + 1 < images.length ? images[currentIndex + 1] : null;
-
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">Фотоальбом</h1>
-      
-      <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
-        {/* Current image */}
-        <div className="w-full md:w-1/2">
-          <div className="bg-gray-100 p-4 rounded-lg shadow-md">
-            <img 
-              src={`http://localhost:5000${currentImage.path}`} 
-              alt="Current" 
-              className="w-full h-auto max-h-[70vh] object-contain rounded"
-            />
-            <p className="text-center mt-2 text-gray-600">
-              Фото {currentIndex + 1} из {images.length}
-            </p>
-          </div>
-        </div>
-        
-        {/* Next image (if available) */}
-        {nextImage && (
-          <div className="w-full md:w-1/2">
-            <div className="bg-gray-100 p-4 rounded-lg shadow-md">
-              <img 
-                src={`http://localhost:5000${nextImage.path}`} 
-                alt="Next" 
-                className="w-full h-auto max-h-[70vh] object-contain rounded"
-              />
-              <p className="text-center mt-2 text-gray-600">
-                Фото {currentIndex + 2} из {images.length}
-              </p>
+    if (loading) {
+        return (
+            <div className="album-container">
+                <div className="loading-spinner"></div>
+                <p className="loading-text">Загрузка альбома...</p>
             </div>
-          </div>
-        )}
-      </div>
-      
-      {/* Navigation buttons */}
-      <div className="flex justify-center mt-8 gap-4">
-        <button 
-          onClick={goToPrevImage}
-          disabled={currentIndex === 0}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Назад
-        </button>
-        <button 
-          onClick={goToNextImage}
-          disabled={currentIndex >= images.length - 1}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Вперёд
-        </button>
-      </div>
-    </div>
-  );
-};
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="album-container">
+                <div className="error-message">
+                    <p>{error}</p>
+                    <button onClick={() => window.location.reload()} className="retry-button">
+                        Попробовать снова
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!images || images.length === 0) {
+        return (
+            <div className="album-container">
+                <h2>{albumTitle}</h2>
+                <div className="empty-album-message">
+                    <p>В этом альбоме пока нет фотографий.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Если есть изображения, получаем URL текущего изображения
+    const getCurrentImageUrl = () => {
+        if (images.length === 0 || currentImageIndex >= images.length) return null;
+        
+        const image = images[currentImageIndex];
+        return (image.url || image).startsWith('http') 
+            ? (image.url || image) 
+            : `${SERVER_BASE_URL}${image.url || image}`;
+    };
+    
+    // Переход к редактированию альбома
+    const handleEditAlbum = () => {
+        navigate(`/admin/${albumId}`);
+    };
+    
+    return (
+        <div className="album-container">
+            <div className="album-header">
+                <h2>{albumTitle}</h2>
+                {isOwner && (
+                    <button onClick={handleEditAlbum} className="edit-button">
+                        Редактировать
+                    </button>
+                )}
+            </div>
+            
+            {images.length > 0 && (
+                <div className="slideshow-container">
+                    <div className="current-image-container">
+                        <img 
+                            src={getCurrentImageUrl()} 
+                            alt={`Фото ${currentImageIndex + 1}`} 
+                            className="current-image"
+                        />
+                        <div className="image-number">{currentImageIndex + 1} / {images.length}</div>
+                    </div>
+                </div>
+            )}
+            
+            {images.length === 0 && !loading && !error && (
+                <div className="empty-album-message">
+                    <p>В этом альбоме пока нет фотографий.</p>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default PublicAlbum;
+

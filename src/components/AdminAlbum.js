@@ -11,6 +11,40 @@ const AdminAlbum = () => {
   const [error, setError] = useState(null);
   const [publicLink, setPublicLink] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  
+  // Функция для корректного формирования URL изображения
+  const getImageUrl = (image) => {
+    if (!image) return 'https://via.placeholder.com/400x300?text=Нет+изображения';
+    
+    // Базовый URL сервера
+    const baseUrl = 'http://localhost:5000';
+    
+    // Если image - это строка (URL или путь)
+    if (typeof image === 'string') {
+      return image.startsWith('http') ? image : `${baseUrl}${image.startsWith('/') ? image : `/${image}`}`;
+    }
+    
+    // Если image - это объект с полем url
+    if (image.url) {
+      const url = image.url;
+      return url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
+    }
+    
+    // Если есть поле path
+    if (image.path) {
+      const path = image.path;
+      return path.startsWith('http') ? path : `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+    }
+    
+    // Если есть только filename
+    if (image.filename) {
+      return `${baseUrl}/uploads/${albumId}/${image.filename}`;
+    }
+    
+    // Если ничего не подошло
+    console.log('Неизвестный формат изображения:', image);
+    return 'https://via.placeholder.com/400x300?text=Неизвестный+формат';
+  };
 
   // Get the secret token from localStorage
   const secretToken = localStorage.getItem(`album_token_${albumId}`);
@@ -19,6 +53,8 @@ const AdminAlbum = () => {
     try {
       setLoading(true);
       const response = await axios.get(`http://localhost:5000/api/albums/${albumId}/images`);
+      console.log('API Response:', response.data);
+      console.log('Images data structure:', response.data.images);
       setImages(response.data.images || []);
     } catch (err) {
       console.error('Error fetching images:', err);
@@ -71,17 +107,43 @@ const AdminAlbum = () => {
     }
   };
 
-  const deleteImage = async (filename) => {
+  const deleteImage = async (image) => {
     if (!window.confirm('Вы уверены, что хотите удалить это изображение?')) {
       return;
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/albums/${albumId}/images/${filename}?token=${secretToken}`);
-      // Refresh the image list
+      // Получаем имя файла или photoId в зависимости от формата данных
+      let identifier;
+      
+      if (typeof image === 'string') {
+        // Если передана строка (имя файла)
+        identifier = image;
+      } else if (image.photoId) {
+        // Если есть photoId, используем его
+        identifier = image.photoId;
+      } else if (image.filename) {
+        // Иначе используем имя файла
+        identifier = image.filename;
+      } else if (image._id) {
+        // В крайнем случае используем _id
+        identifier = image._id;
+      } else {
+        throw new Error('Не удалось определить идентификатор изображения');
+      }
+      
+      // Кодируем идентификатор для URL
+      const encodedIdentifier = encodeURIComponent(identifier);
+      
+      console.log('Удаление изображения:', { image, identifier, encodedIdentifier });
+      
+      // Отправляем запрос на удаление
+      await axios.delete(`http://localhost:5000/api/albums/${albumId}/images/${encodedIdentifier}?token=${secretToken}`);
+      
+      // Обновляем список изображений
       fetchImages();
     } catch (err) {
-      console.error('Error deleting image:', err);
+      console.error('Ошибка при удалении изображения:', err);
       setError('Не удалось удалить изображение. Пожалуйста, попробуйте еще раз.');
     }
   };
@@ -139,7 +201,15 @@ const AdminAlbum = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">Управление альбомом</h1>
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-4"
+        >
+          ← Назад
+        </button>
+        <h1 className="text-3xl font-bold text-center flex-grow">Управление альбомом</h1>
+      </div>
       
       {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
       
@@ -189,12 +259,25 @@ const AdminAlbum = () => {
             {images.map((image, index) => (
               <div key={index} className="relative group">
                 <img 
-                  src={`http://localhost:5000${image.path}`} 
+                  src={getImageUrl(image)}
                   alt={`${index + 1}`}
                   className="w-full h-48 object-cover rounded-lg shadow-md"
+                  onError={(e) => {
+                    console.error('Ошибка загрузки изображения:', image);
+                    // Попробуем альтернативный URL, если основной не сработал
+                    if (image.url && !e.target.dataset.retried) {
+                      e.target.dataset.retried = 'true';
+                      e.target.src = `http://localhost:5000${image.url}`;
+                    } else if (image.filename && !e.target.dataset.retriedFilename) {
+                      e.target.dataset.retriedFilename = 'true';
+                      e.target.src = `http://localhost:5000/uploads/${albumId}/${image.filename}`;
+                    } else {
+                      e.target.src = 'https://via.placeholder.com/400x300?text=Ошибка+загрузки';
+                    }
+                  }}
                 />
                 <button
-                  onClick={() => deleteImage(image.filename)}
+                  onClick={() => deleteImage(image)}
                   className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

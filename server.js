@@ -3,10 +3,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const connectDB = require('./src/config/db');
 const User = require('./src/models/User');
 const Album = require('./src/models/Album');
+const { auth, JWT_SECRET } = require('./src/middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -63,12 +65,13 @@ const upload = multer({
 
 // Routes
 // Create a new album
-app.post('/api/albums', async (req, res) => {
+app.post('/api/albums', auth, async (req, res) => {
   try {
     console.log('Получен запрос на создание альбома');
     console.log('Тело запроса:', req.body);
     
-    const { userId, title } = req.body;
+    const { title } = req.body;
+    const userId = req.user.userId;
     const albumId = uuidv4();
     const deleteToken = uuidv4();
     
@@ -178,6 +181,32 @@ app.get('/api/albums/:albumId/images', async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// Get public album images (no auth required)
+app.get('/api/albums/:albumId/public', async (req, res) => {
+  try {
+    const albumId = req.params.albumId;
+    const album = await Album.findOne({ albumId });
+
+    if (!album) {
+      return res.status(404).json({ success: false, message: 'Album not found' });
+    }
+
+    // Return only the necessary image data (e.g., URLs)
+    // The frontend PublicAlbum.js expects response.data.images
+    // and each image in the array to have a .url property or be a string URL.
+    // album.photos is an array of objects like { photoId, filename, url, uploadedAt }
+    res.json({ 
+      success: true, 
+      images: album.photos.map(photo => ({ url: photo.url, filename: photo.filename })) // Отправляем url и filename
+      // Или если фронтенд ожидает только URL: images: album.photos.map(photo => photo.url)
+    });
+  } catch (error) {
+    console.error('Error getting public album images:', error);
+    res.status(500).json({ success: false, message: 'Error retrieving album data.' });
+  }
+});
+
 
 // Delete an image
 app.delete('/api/albums/:albumId/images/:photoId', async (req, res) => {
@@ -356,9 +385,16 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
     
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user.userId, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
     res.json({ 
       success: true, 
-      userId: user.userId,
+      token,
       username: user.username
     });
   } catch (error) {
@@ -367,26 +403,30 @@ app.post('/api/users/login', async (req, res) => {
   }
 });
 
-// Get user albums
-app.get('/api/users/:userId/albums', async (req, res) => {
+// Get all albums for authenticated user
+app.get('/api/albums', auth, async (req, res) => {
   try {
-    const { userId } = req.params;
+    console.log('Получен запрос на получение альбомов');
+    const userId = req.user.userId;
+    console.log('Идентификатор пользователя:', userId);
     
     // Find all albums for this user
     const albums = await Album.find({ userId });
+    console.log('Найдено альбомов:', albums.length);
     
-    res.json({ 
-      success: true, 
-      albums: albums.map(album => ({
-        albumId: album.albumId,
-        title: album.title,
-        createdAt: album.createdAt,
-        photoCount: album.photos.length,
-        deleteToken: album.deleteToken
-      }))
-    });
+    const formattedAlbums = albums.map(album => ({
+      id: album.albumId,
+      title: album.title || 'Без названия',
+      description: album.description || 'Без описания',
+      createdAt: album.createdAt,
+      photoCount: album.photos.length,
+      token: album.deleteToken
+    }));
+
+    console.log('Отправка ответа клиенту');
+    res.json(formattedAlbums);
   } catch (error) {
-    console.error('Error getting user albums:', error);
+    console.error('Ошибка при получении альбомов:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
