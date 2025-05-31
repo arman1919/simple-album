@@ -431,7 +431,7 @@ const AdminAlbum = () => {
               <h2 className="text-xl font-semibold">Информация об альбоме</h2>
               <button
                 onClick={() => setIsEditing(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-sm"
+                className="btn btn-primary btn-sm"
               >
                 Редактировать
               </button>
@@ -446,25 +446,27 @@ const AdminAlbum = () => {
       
       <div className="bg-blue-100 p-4 rounded-lg mb-6">
         <h2 className="text-xl font-semibold mb-2">Публичная ссылка на альбом:</h2>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <input 
             type="text" 
             value={publicLink} 
             readOnly 
-            className="flex-grow p-2 border rounded-l"
+            className="form-input flex-grow"
           />
-          <button
-            onClick={() => window.open(publicLink, '_blank')}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-r"
-          >
-            посмотреть
-          </button>
-          <button 
-            onClick={copyToClipboard}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-r"
-          >
-            Копировать
-          </button>
+          <div className="btn-group">
+            <button
+              onClick={() => window.open(publicLink, '_blank')}
+              className="btn btn-primary"
+            >
+              Посмотреть
+            </button>
+            <button 
+              onClick={copyToClipboard}
+              className="btn btn-secondary"
+            >
+              Копировать
+            </button>
+          </div>
         </div>
       </div>
       

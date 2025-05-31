@@ -1,0 +1,246 @@
+/* Стили для карточек альбомов */
+.album-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid #edf2f7;
+    will-change: transform, box-shadow;
+}
+
+.album-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.album-card:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.4), 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.album-card.selected {
+    border: 2px solid #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+}
+
+.album-card-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.album-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.album-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.album-card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Бейджи для карточек */
+.album-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.album-badge-photos {
+    background-color: rgba(66, 153, 225, 0.9);
+    color: white;
+}
+
+.album-badge-new {
+    background-color: rgba(72, 187, 120, 0.9);
+    color: white;
+}
+
+.album-badge-private {
+    background-color: rgba(113, 128, 150, 0.9);
+    color: white;
+}
+
+.album-card-body {
+    padding: 1rem 1.5rem;
+    flex-grow: 1;
+}
+
+.album-card-thumbnail {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.album-card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f0f4f8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
+    gap: 0.5rem;
+}
+
+.album-card:hover .album-card-footer {
+    background-color: #edf2f7;
+}
+
+/* Стили для кнопок в карточках */
+.album-card .btn-group {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.album-card .btn-group .btn {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.album-card-action {
+    padding: 0 1.5rem 1rem 1.5rem;
+    background-color: #f8fafc;
+    width: 100%;
+}
+
+.album-card .btn-danger {
+    width: 100%;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Стили для сетки альбомов */
+.albums-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Стили для чекбоксов в режиме выбора */
+.album-card-checkbox {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    transform: scale(1.2);
+}
+
+/* Стили для карточки создания нового альбома */
+.create-album-card {
+    background-color: #ffffff;
+    border: 2px dashed #cbd5e0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+}
+
+.create-album-card:hover {
+    border-color: #4299e1;
+    background-color: #f7fafc;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.album-card-content {
+    text-align: center;
+    padding: 2rem;
+    width: 100%;
+}
+
+.create-album-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #4299e1;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+}
+
+.create-album-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+}
+
+.create-album-text {
+    color: #718096;
+    font-size: 0.95rem;
+}
+
+/* Стили для пустого состояния */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background-color: #f8fafc;
+    border-radius: 10px;
+    border: 1px dashed #cbd5e0;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #a0aec0;
+    margin-bottom: 1rem;
+}
+
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.75rem;
+}
+
+.empty-state-text {
+    color: #718096;
+    margin-bottom: 1.5rem;
+}

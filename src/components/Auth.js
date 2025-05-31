@@ -136,102 +136,119 @@ const Auth = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-md">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">
-          {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
-        </h1>
+    <div className="container">
+      <div className="form-container animate-fade-in">
+        <div className="form-header">
+          <h1 className="form-title">
+            {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
+          </h1>
+          <p className="form-subtitle">
+            {isLogin ? 'Войдите для доступа к вашим альбомам' : 'Создайте новый аккаунт для хранения фотографий'}
+          </p>
+        </div>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="form-message form-message-error">
             {error}
           </div>
         )}
         
         <form onSubmit={handleSubmit}>
           {!isLogin && (
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2" htmlFor="username">
+            <div className="form-group">
+              <label className="form-label" htmlFor="username">
                 Имя пользователя
               </label>
               <input
                 id="username"
                 type="text"
-                className={`w-full p-2 border ${validationErrors.username ? 'border-red-500' : 'border-gray-300'} rounded`}
+                className={`form-input ${validationErrors.username ? 'error' : ''}`}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="Введите имя пользователя"
               />
               {validationErrors.username && (
-                <p className="text-red-500 text-sm mt-1">{validationErrors.username}</p>
+                <p className="form-error">{validationErrors.username}</p>
               )}
             </div>
           )}
           
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="email">
+          <div className="form-group">
+            <label className="form-label" htmlFor="email">
               Email
             </label>
             <input
               id="email"
               type="email"
-              className={`w-full p-2 border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded`}
+              className={`form-input ${validationErrors.email ? 'error' : ''}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Введите ваш email"
             />
             {validationErrors.email && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+              <p className="form-error">{validationErrors.email}</p>
             )}
           </div>
           
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="password">
+          <div className="form-group">
+            <label className="form-label" htmlFor="password">
               Пароль
             </label>
             <input
               id="password"
               type="password"
-              className={`w-full p-2 border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'} rounded`}
+              className={`form-input ${validationErrors.password ? 'error' : ''}`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Введите пароль"
             />
             {validationErrors.password && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>
+              <p className="form-error">{validationErrors.password}</p>
             )}
           </div>
           
           {!isLogin && (
-            <div className="mb-6">
-              <label className="block text-gray-700 mb-2" htmlFor="confirmPassword">
+            <div className="form-group">
+              <label className="form-label" htmlFor="confirmPassword">
                 Подтвердите пароль
               </label>
               <input
                 id="confirmPassword"
                 type="password"
-                className={`w-full p-2 border ${validationErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded`}
+                className={`form-input ${validationErrors.confirmPassword ? 'error' : ''}`}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Повторите пароль"
               />
               {validationErrors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">{validationErrors.confirmPassword}</p>
+                <p className="form-error">{validationErrors.confirmPassword}</p>
               )}
             </div>
           )}
           
-          <button
-            type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-4 transition duration-300 disabled:opacity-50"
-            disabled={loading}
-          >
-            {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
-          </button>
+          <div className="form-actions">
+            <button
+              type="submit"
+              className={`btn btn-primary btn-block ${loading ? 'btn-loading' : ''}`}
+              disabled={loading}
+            >
+              {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
+            </button>
+          </div>
         </form>
+        
+        <div className="form-divider">Или</div>
         
         <button
           onClick={toggleAuthMode}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded mb-4 transition duration-300"
+          className="btn btn-secondary btn-block"
         >
           {isLogin ? 'Создать новый аккаунт' : 'Уже есть аккаунт? Войти'}
         </button>
+        
+        <p className="form-note">
+          {isLogin ? 'Для доступа к вашим альбомам необходимо войти в систему' : 'После регистрации вы сможете создавать и управлять своими альбомами'}
+        </p>
         
 
       </div>

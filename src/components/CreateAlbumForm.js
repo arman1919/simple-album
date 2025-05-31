@@ -56,21 +56,24 @@ const CreateAlbumForm = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container">
       <NavBar />
       
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">Создание нового альбома</h1>
+      <div className="form-container animate-slide-up">
+        <div className="form-header">
+          <h1 className="form-title">Создание нового альбома</h1>
+          <p className="form-subtitle">Введите название для вашего нового альбома</p>
+        </div>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="form-message form-message-error">
             {error}
           </div>
         )}
         
         <form onSubmit={handleCreateAlbum}>
-          <div className="mb-6">
-            <label htmlFor="title" className="block text-gray-700 font-medium mb-2">
+          <div className="form-group">
+            <label htmlFor="title" className="form-label">
               Название альбома
             </label>
             <input
@@ -78,16 +81,17 @@ const CreateAlbumForm = () => {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="form-input"
               placeholder="Введите название альбома"
+              required
             />
           </div>
           
-          <div className="flex justify-between">
+          <div className="form-actions">
             <button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded"
+              className="btn btn-secondary"
             >
               Отмена
             </button>
@@ -95,9 +99,9 @@ const CreateAlbumForm = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50"
+              className={`btn btn-primary ${loading ? 'btn-loading' : ''}`}
             >
-              {loading ? 'Создание...' : 'Сохранить'}
+              {loading ? 'Создание...' : 'Создать альбом'}
             </button>
           </div>
         </form>

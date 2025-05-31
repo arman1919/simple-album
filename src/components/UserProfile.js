@@ -192,24 +192,28 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">Загрузка...</h1>
+      <div className="container">
+        <NavBar />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p className="loading-text">Загрузка альбомов...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container">
       <NavBar />
       
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Мои Альбомы</h1>
+      <div className="content-container animate-fade-in-up">
+        <div className="content-header">
+          <h1 className="page-title">Мои Альбомы</h1>
           
-          <div className="flex space-x-2">
+          <div className="btn-group">
             <button
               onClick={toggleSelectMode}
-              className={`px-4 py-2 rounded ${selectMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`btn ${selectMode ? 'btn-primary' : 'btn-secondary'}`}
             >
               {selectMode ? 'Завершить выбор' : 'Выбрать альбомы'}
             </button>
@@ -218,7 +222,7 @@ const UserProfile = () => {
               <>
                 <button
                   onClick={selectAllAlbums}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded"
+                  className="btn btn-secondary"
                 >
                   {selectedAlbums.length === albums.length ? 'Снять выделение' : 'Выбрать все'}
                 </button>
@@ -226,7 +230,7 @@ const UserProfile = () => {
                 <button
                   onClick={deleteSelectedAlbums}
                   disabled={selectedAlbums.length === 0}
-                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-danger"
                 >
                   Удалить выбранные ({selectedAlbums.length})
                 </button>
@@ -236,77 +240,95 @@ const UserProfile = () => {
         </div>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="form-message form-message-error animate-fade-in">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {albums.map((album) => {
+        <div className="albums-grid">
+          {albums.map((album, index) => {
             const isSelected = selectedAlbums.includes(album.id);
             
             return (
-              <div 
-                key={album.id} 
-                className={`bg-white rounded-lg shadow-md overflow-hidden ${selectMode && isSelected ? 'ring-4 ring-blue-500' : ''}`}
-                onClick={selectMode ? () => toggleAlbumSelection(album.id) : undefined}
+              <div
+                key={album.id}
+                className={`album-card ${isSelected ? 'selected' : ''} animate-fade-in-up`}
+                style={{animationDelay: `${index * 0.05}s`}}
               >
-                <div className="p-6">
-                  {selectMode && (
-                    <div className="flex items-center mb-3">
-                      <input 
-                        type="checkbox" 
-                        checked={isSelected}
-                        onChange={() => toggleAlbumSelection(album.id)}
-                        className="w-5 h-5 cursor-pointer mr-2"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span className="text-sm text-gray-600">Выбрать</span>
-                    </div>
-                  )}
-                  
-                  <h2 className="text-xl font-semibold mb-4">{album.title || 'Без названия'}</h2>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <Link
-                        to={`/admin/${album.id}`}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
-                        onClick={(e) => selectMode && e.preventDefault()}
-                      >
-                        Управление
-                      </Link>
-                      <Link
-                        to={`/album/${album.id}`}
-                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                        onClick={(e) => selectMode && e.preventDefault()}
-                      >
-                        Просмотр
-                      </Link>
-                    </div>
-                    {!selectMode && (
-                      <button
-                        onClick={() => deleteAlbum(album.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                      >
-                        Удалить
-                      </button>
-                    )}
+                {album.photoCount > 0 && (
+                  <div className="album-badge album-badge-photos">
+                    {album.photoCount} фото
+                  </div>
+                )}
+                
+                {selectMode && (
+                  <div className="album-card-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleAlbumSelection(album.id)}
+                      className="form-checkbox"
+                    />
+                  </div>
+                )}
+                
+                <div className="album-card-header">
+                  <h2 className="album-card-title">{album.title || 'Без названия'}</h2>
+                  <div className="album-card-meta">
+                    <span>
+                      <i className="far fa-calendar"></i> 
+                      {new Date(album.createdAt || Date.now()).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
+                          
+                <div className="album-card-footer">
+                  <div className="btn-group">
+                    <Link
+                      to={`/admin/${album.id}`}
+                      className="btn btn-primary btn-sm"
+                      onClick={(e) => selectMode && e.preventDefault()}
+                    >
+                      Управление
+                    </Link>
+                    <Link
+                      to={`/album/${album.id}`}
+                      className="btn btn-success btn-sm"
+                      onClick={(e) => selectMode && e.preventDefault()}
+                    >
+                      Просмотр
+                    </Link>
+                  </div>
+                </div>
+                
+                {!selectMode && (
+                  <div className="album-card-action">
+                    <button
+                      onClick={() => deleteAlbum(album.id)}
+                      className="btn btn-danger btn-sm"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
           
           {/* Кнопка создания нового альбома */}
           <div 
-            className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center hover:border-gray-400 transition-colors cursor-pointer"
+            className="album-card create-album-card animate-fade-in-up"
+            style={{animationDelay: `${albums.length * 0.05}s`}}
             onClick={createNewAlbum}
           >
-            <div className="text-gray-600 hover:text-gray-800 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="block">{creatingAlbum ? 'Создание...' : 'Создать новый альбом'}</span>
+            <div className="album-card-content">
+              <div className="create-album-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h3 className="create-album-title">{creatingAlbum ? 'Создание...' : 'Создать новый альбом'}</h3>
+              <p className="create-album-text">Добавьте новый альбом для ваших фотографий</p>
             </div>
           </div>
         </div>
