@@ -7,16 +7,84 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
   const navigate = useNavigate();
+
+  // Функция валидации email
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      return 'Электронная почта обязательна';
+    } else if (!emailRegex.test(email)) {
+      return 'Неверный формат электронной почты';
+    }
+    return '';
+  };
+
+  // Функция валидации пароля
+  const validatePassword = (password) => {
+    if (!password) {
+      return 'Пароль обязателен';
+    } else if (password.length < 6) {
+      return 'Пароль должен содержать минимум 6 символов';
+    }
+    return '';
+  };
+
+  // Функция валидации подтверждения пароля
+  const validateConfirmPassword = (password, confirmPassword) => {
+    if (!confirmPassword) {
+      return 'Подтверждение пароля обязательно';
+    } else if (password !== confirmPassword) {
+      return 'Пароли не совпадают';
+    }
+    return '';
+  };
+
+  // Функция валидации имени пользователя
+  const validateUsername = (username) => {
+    if (!username) {
+      return 'Имя пользователя обязательно';
+    } else if (username.length < 3) {
+      return 'Имя пользователя должно содержать минимум 3 символа';
+    }
+    return '';
+  };
+
+  // Функция валидации формы
+  const validateForm = () => {
+    const errors = {
+      email: validateEmail(email),
+      password: validatePassword(password),
+      username: isLogin ? '' : validateUsername(username),
+      confirmPassword: isLogin ? '' : validateConfirmPassword(password, confirmPassword)
+    };
+
+    setValidationErrors(errors);
+
+    // Возвращаем true, если нет ошибок
+    return !Object.values(errors).some(error => error !== '');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Проверяем валидность формы
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     console.log('Отправка формы:', isLogin ? 'логин' : 'регистрация');
-    console.log('Данные:', { email, password, username: isLogin ? null : username });
 
     try {
       if (isLogin) {
@@ -26,7 +94,6 @@ const Auth = () => {
           email,
           password
         });
-        console.log('Ответ от сервера:', response.data);
 
         if (response.data.success) {
           console.log('Успешный вход, сохраняем данные...');
@@ -35,7 +102,6 @@ const Auth = () => {
           localStorage.setItem('username', response.data.username);
           
           // Перенаправляем на домашнюю страницу
-          console.log('Перенаправляем на главную страницу...');
           navigate('/');
         }
       } else {
@@ -46,7 +112,6 @@ const Auth = () => {
           email,
           password
         });
-        console.log('Ответ от сервера (регистрация):', response.data);
 
         if (response.data.success) {
           console.log('Успешная регистрация, переключаемся на форму входа...');
@@ -57,17 +122,6 @@ const Auth = () => {
       }
     } catch (err) {
       console.error('Ошибка аутентификации:', err);
-      console.log('Детали ошибки:', {
-        message: err.message,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        responseData: err.response?.data,
-        config: {
-          url: err.config?.url,
-          method: err.config?.method,
-          data: err.config?.data
-        }
-      });
       setError(err.response?.data?.message || 'Произошла ошибка. Пожалуйста, попробуйте снова.');
     } finally {
       setLoading(false);
@@ -79,63 +133,7 @@ const Auth = () => {
     setError('');
   };
 
-  const handleGuestMode = async () => {
-    try {
-      setLoading(true);
-      console.log('Создание гостевого альбома...');
-      
-      // Сначала регистрируем гостевого пользователя
-      const guestUsername = `guest_${Date.now()}`;
-      const guestEmail = `guest_${Date.now()}@example.com`;
-      const guestPassword = `guest_${Date.now()}`;
-      
-      // Регистрация гостевого пользователя
-      const registerResponse = await axios.post('http://localhost:5000/api/users/register', {
-        username: guestUsername,
-        email: guestEmail,
-        password: guestPassword
-      });
-      
-      console.log('Гостевой пользователь зарегистрирован:', registerResponse.data);
-      
-      // Логин гостевого пользователя
-      const loginResponse = await axios.post('http://localhost:5000/api/users/login', {
-        email: guestEmail,
-        password: guestPassword
-      });
-      
-      console.log('Гостевой пользователь авторизован:', loginResponse.data);
-      
-      // Сохраняем токен гостевого пользователя
-      const guestToken = loginResponse.data.token;
-      localStorage.setItem('userToken', guestToken);
-      localStorage.setItem('username', guestUsername);
-      
-      // Создаем новый альбом для гостевого пользователя
-      const albumResponse = await axios.post('http://localhost:5000/api/albums', 
-        { title: 'Гостевой альбом' },
-        {
-          headers: {
-            'Authorization': `Bearer ${guestToken}`
-          }
-        }
-      );
-      
-      console.log('Альбом создан:', albumResponse.data);
-      const { albumId, deleteToken } = albumResponse.data;
-      
-      // Сохраняем токен для удаления альбома
-      localStorage.setItem(`album_token_${albumId}`, deleteToken);
-      
-      // Перенаправляем на страницу администрирования альбома
-      navigate(`/admin/${albumId}`);
-    } catch (err) {
-      console.error('Ошибка создания гостевого альбома:', err);
-      setError('Не удалось создать гостевой альбом: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
@@ -159,11 +157,13 @@ const Auth = () => {
               <input
                 id="username"
                 type="text"
-                className="w-full p-2 border border-gray-300 rounded"
+                className={`w-full p-2 border ${validationErrors.username ? 'border-red-500' : 'border-gray-300'} rounded`}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required
               />
+              {validationErrors.username && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.username}</p>
+              )}
             </div>
           )}
           
@@ -174,26 +174,48 @@ const Auth = () => {
             <input
               id="email"
               type="email"
-              className="w-full p-2 border border-gray-300 rounded"
+              className={`w-full p-2 border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
+            {validationErrors.email && (
+              <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+            )}
           </div>
           
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="password">
               Пароль
             </label>
             <input
               id="password"
               type="password"
-              className="w-full p-2 border border-gray-300 rounded"
+              className={`w-full p-2 border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'} rounded`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
+            {validationErrors.password && (
+              <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>
+            )}
           </div>
+          
+          {!isLogin && (
+            <div className="mb-6">
+              <label className="block text-gray-700 mb-2" htmlFor="confirmPassword">
+                Подтвердите пароль
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                className={`w-full p-2 border ${validationErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded`}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {validationErrors.confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.confirmPassword}</p>
+              )}
+            </div>
+          )}
           
           <button
             type="submit"
@@ -211,16 +233,7 @@ const Auth = () => {
           {isLogin ? 'Создать новый аккаунт' : 'Уже есть аккаунт? Войти'}
         </button>
         
-        <div className="text-center mt-6">
-          <p className="text-gray-600 mb-4">или</p>
-          <button
-            onClick={handleGuestMode}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 disabled:opacity-50"
-            disabled={loading}
-          >
-            Продолжить без регистрации
-          </button>
-        </div>
+
       </div>
     </div>
   );
